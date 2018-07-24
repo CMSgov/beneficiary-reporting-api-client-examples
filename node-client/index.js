@@ -4,12 +4,19 @@ const moment = require('moment');
 const exampleData = require('../data.json');
 
 const BASE_URL = 'http://localhost:3000/api/submissions/web-interface/';
+const TOKEN = 'your-token-here';
 const LIMIT = 100; // this is the max query limit for the API
 
+const http = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    Authentication: TOKEN
+  }
+});
 
 async function start() {
   // 1. Get you organization id
-  const myOrganizations = (await axios.get(`${BASE_URL}organizations`)).data;
+  const myOrganizations = (await http.get(`organizations`)).data;
   
   // We'll use this first org in the array on this example
   // This should be matched with your EHR data by organization.tin
@@ -17,7 +24,7 @@ async function start() {
 
 
   // 2. Get the first 100 beneficiaries with measures and submissions
-  let result = (await axios.get(`${BASE_URL}beneficiaries/organization/${organization.id}?measures=true&submissions=true&limit=${LIMIT}`)).data;
+  let result = (await http.get(`beneficiaries/organization/${organization.id}?measures=true&submissions=true&limit=${LIMIT}`)).data;
   let beneficiaries = result.data.items;
   const total = result.data.totalItems;
   let loaded = beneficiaries.length;
@@ -27,7 +34,7 @@ async function start() {
   while (loaded !== total) {
     console.log(`${loaded} of ${total} loaded...`);
     const offset = result.data.startIndex + result.data.currentItemCount;
-    result = (await axios.get(`${BASE_URL}beneficiaries/organization/${organization.id}?measures=true&submissions=true&limit=${LIMIT}&offset=${offset}`)).data;
+    result = (await http.get(`beneficiaries/organization/${organization.id}?measures=true&submissions=true&limit=${LIMIT}&offset=${offset}`)).data;
     beneficiaries = beneficiaries.concat(result.data.items);
     loaded = beneficiaries.length;
   }
@@ -60,7 +67,7 @@ async function start() {
     // Call the beneficiaries PATCH endpoint to send the updates
     console.log(`beneficiary ${beneficiary.id} updated`);
     return Promise.resolve({ beneficiaryId: beneficiary.id, status: 'success' });
-    return axios.patch(`${BASE_URL}organizations/${organization.id}/beneficiary/${beneficiary.id}`, beneficiary);
+    return http.patch(`organizations/${organization.id}/beneficiary/${beneficiary.id}`, beneficiary);
   });
 
   
@@ -73,7 +80,7 @@ async function start() {
 
   // 6. Call the statistics endpoint to get your reporting statistics.
   //    This will allow you to determine the status of reporting
-  const statsResult = (await axios.get(`${BASE_URL}organizations/${organization.id}/statistics`)).data;
+  const statsResult = (await http.get(`organizations/${organization.id}/statistics`)).data;
   console.log('stats', statsResult.data);
   
   return true;
