@@ -10,7 +10,7 @@ npm i
 ```
 
 ### Authentication
-Update the `TOKEN` setting it to use a valid JWT you obtaine from following the authentication steps outlined [here]()
+Update the `TOKEN` setting it to use a valid JWT you obtain from following the authentication steps outlined [here]()
 ```javascript
 const TOKEN = 'your-token-here';
 ```

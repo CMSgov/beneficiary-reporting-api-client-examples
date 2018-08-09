@@ -16,7 +16,7 @@ const http = axios.create({
 
 async function start() {
   // 1. Get you organization id
-  const myOrganizations = (await http.get(`organizations`)).data;
+  const myOrganizations = (await http.get('organizations')).data;
   
   // We'll use this first org in the array on this example
   // This should be matched with your EHR data by organization.tin
@@ -44,10 +44,6 @@ async function start() {
   // This will be used later for status inspection
   const measureNames = [];
 
-  // Note the start time
-  const startTime = moment();
-
-
   // 4. Loop through all beneficiaries and update with EHR data
   const promises = beneficiaries.map((beneficiary) => {
     // Update the beneficiary info. For more info see *** todo: add link here to narrative describing bene medicalRecordFound
@@ -65,8 +61,6 @@ async function start() {
     });
 
     // Call the beneficiaries PATCH endpoint to send the updates
-    console.log(`beneficiary ${beneficiary.id} updated`);
-    return Promise.resolve({ beneficiaryId: beneficiary.id, status: 'success' });
     return http.patch(`organizations/${organization.id}/beneficiary/${beneficiary.id}`, beneficiary);
   });
 
