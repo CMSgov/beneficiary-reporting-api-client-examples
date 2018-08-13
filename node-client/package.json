@@ -1,0 +1,16 @@
+{
+  "name": "beneficiary-reporting-api-client",
+  "version": "1.0.0",
+  "description": "An example client for using the WebInterface API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Branon Barrett",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "commander": "^2.16.0"
+  }
+}
