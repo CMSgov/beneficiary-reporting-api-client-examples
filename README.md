@@ -36,5 +36,3 @@ $ git clone https://github.cms.gov/qpp/beneficiary-reporting-api-client-examples
 ```
 
 To run the individual example projects see the README in their respective project directories. In each example you will need to change the TOKEN value to a JWT you obtain by following the user authentication steps outlined [here](http://dev.qpp.cms.gov/api/auth/docs/#/Authentication)
-
-To run the individual example projects see the README in their respective project directories.

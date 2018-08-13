@@ -1,5 +1,4 @@
 const axios = require('axios');
-const moment = require('moment');
 
 const exampleData = require('../data.json');
 
@@ -82,7 +81,7 @@ async function start() {
 
 start()
   .then(() => {
-    console.log('Done!');
+    console.log('Done!');s
     process.exit(0);
   })
   .catch((error) => {
