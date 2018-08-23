@@ -9,14 +9,15 @@ const LIMIT = 100; // this is the max query limit for the API
 const http = axios.create({
   baseURL: BASE_URL,
   headers: {
-    Authentication: TOKEN
+    Authentication: TOKEN,
+    'Content-Type': 'application/json'
   }
 });
 
 async function start() {
-  // 1. Get you organization id
+  // 1. Get your organization id
   const myOrganizations = (await http.get('organizations')).data;
-  
+
   // We'll use this first org in the array on this example
   // This should be matched with your EHR data by organization.tin
   const organization = myOrganizations.data.items[0];
@@ -44,7 +45,7 @@ async function start() {
   const measureNames = [];
 
   // 4. Loop through all beneficiaries and update with EHR data
-  const promises = beneficiaries.map((beneficiary) => {
+  const updates = beneficiaries.map((beneficiary) => {
     // Update the beneficiary info. For more info see *** todo: add link here to narrative describing bene medicalRecordFound
     beneficiary.medicalRecordFound = 'Y';
 
@@ -59,29 +60,28 @@ async function start() {
       return measure;
     });
 
-    // Call the beneficiaries PATCH endpoint to send the updates
-    return http.patch(`organizations/${organization.id}/beneficiary/${beneficiary.id}`, beneficiary);
+    return beneficiary;
   });
 
-  
-  const results = await Promise.all(promises);
+  // 5. Call the beneficiaries PATCH endpoint to send the updates
+  await http.patch(`beneficiaries/organization/${organization.id}/beneficiaries`, updates);
 
 
-  // 5. Check results for errors.
+  // 6. Check results for errors.
   // TODO: Output errors to some file or other format to be evaluated and corrected
-  
 
-  // 6. Call the statistics endpoint to get your reporting statistics.
+
+  // 7. Call the statistics endpoint to get your reporting statistics.
   //    This will allow you to determine the status of reporting
-  const statsResult = (await http.get(`organizations/${organization.id}/statistics`)).data;
+  const statsResult = (await http.get(`organizations/${organization.id}/stats`)).data;
   console.log('stats', statsResult.data);
-  
+
   return true;
 }
 
 start()
   .then(() => {
-    console.log('Done!');s
+    console.log('Done!'); s
     process.exit(0);
   })
   .catch((error) => {
