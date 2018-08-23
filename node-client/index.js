@@ -81,7 +81,7 @@ async function start() {
 
 start()
   .then(() => {
-    console.log('Done!'); s
+    console.log('Done!');
     process.exit(0);
   })
   .catch((error) => {
