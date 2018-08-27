@@ -20,7 +20,7 @@ async function start() {
 
   // We'll use this first org in the array on this example
   // This should be matched with your EHR data by organization.tin
-  const organization = myOrganizations.data.items[0];
+  const organization = myOrganizations.data.items.find(org => org.id === 103789)
 
 
   // 2. Get the first 100 beneficiaries with measures and submissions
@@ -40,31 +40,43 @@ async function start() {
   }
   console.log(`${loaded} of ${total} loaded...`);
 
-  // Collect all measure names that we have submitted data for.
-  // This will be used later for status inspection
-  const measureNames = [];
-
   // 4. Loop through all beneficiaries and update with EHR data
   const updates = beneficiaries.map((beneficiary) => {
     // Update the beneficiary info. For more info see *** todo: add link here to narrative describing bene medicalRecordFound
-    beneficiary.medicalRecordFound = 'Y';
+    return {
+      id: beneficiary.id, // required
+      comments: 'A comment about this beneficiary',
+      skippedReason: null,
+      medicalRecordFound: 'YES',
+      measures: beneficiary.measures.map((measure) => {
+        // Update one or more measures with submission data *** todo: add link here to narrative describing measure submission data
+        let submissions = exampleData[measure.name].answers;
 
-    // Update the measures with submission data *** todo: add link here to narrative describing measure submission data
-    beneficiary.measures = beneficiary.measures.map((measure) => {
-      if (!measureNames.includes(measure.name)) {
-        measureNames.push(measure.name);
-      }
+        // CARE-1 is a measure with 1 or more scopes.  All submissions must include the scope for each attribute
+        if (measure.name === 'CARE-1') {
+          const scope = measure.submissions.find(submission => submission.scope === submission.value);
+          submissions = exampleData['CARE-1'].answers.map((answer) => {
+            return {
+              ...answer,
+              scope: scope.value
+            }
+          });
+        }
 
-      // Replace this fake submission data with your EHR data
-      measure.submissions = exampleData[measure.name].answers;
-      return measure;
-    });
-
-    return beneficiary;
+        return {
+          name: measure.name, // required
+          comments: 'A comment about this measure',
+          submissions
+        };
+      })
+    };
   });
 
-  // 5. Call the beneficiaries PATCH endpoint to send the updates
-  await http.patch(`beneficiaries/organization/${organization.id}/beneficiaries`, updates);
+  // 5. Call the beneficiaries PATCH endpoint to send the updates 100 beneficiaries at a time
+  while (updates.length > 0) {
+    const batch = updates.splice(0, Math.min(100, updates.length));
+    await http.patch(`beneficiaries/organization/${organization.id}/beneficiaries`, batch);
+  }
 
 
   // 6. Check results for errors.
@@ -85,6 +97,6 @@ start()
     process.exit(0);
   })
   .catch((error) => {
-    console.log('error', error);
+     console.log('error', error);
     process.exit(1);
   });
