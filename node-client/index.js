@@ -86,7 +86,7 @@ async function start() {
   while (updates.length > 0) {
     // Get the next 100 beneficiaries in the udpates to process unitl we have processed them all
     const batch = updates.splice(0, Math.min(100, updates.length));
-    await http.patch(`beneficiaries/organization/${organization.id}/beneficiaries`, batch);
+    await http.patch(`beneficiaries/organization/${organization.id}`, batch);
   }
 
   /**
