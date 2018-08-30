@@ -22,7 +22,7 @@ For example, submissions for a beneficiary in PREV-5 would look like this:
 ]
 ```
 
-The measures metadata can be found [here - wip](http://google.com). Reviewing the metadata should provide sufficient explanation of each measure and the expected answers for the measure questions.
+The measures metadata can be found [here](https://qpp.cms.gov/api/preview/submissions/web-interface/docs/#/Measures%20Metadata/get_metadata). Reviewing the metadata should provide sufficient explanation of each measure and the expected answers for the measure questions.
 
 # Installing and Getting Started #
 
@@ -32,7 +32,7 @@ If you have Git installed, go on and clone the repository.
 From your favorite command line:
 
 ```bash
-$ git clone https://github.cms.gov/qpp/beneficiary-reporting-api-client-examples.git
+$ git clone https://github.com/CMSgov/beneficiary-reporting-api-client-examples.git
 ```
 
 To run the individual example projects see the README in their respective project directories.
