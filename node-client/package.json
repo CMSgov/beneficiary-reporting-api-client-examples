@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.18.0",
-    "commander": "^2.16.0"
+    "commander": "^2.16.0",
+    "inquirer": "^6.2.0"
   }
 }
