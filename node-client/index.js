@@ -66,7 +66,6 @@ async function start() {
     return {
       id: beneficiary.id, // required
       comments: 'A comment about this beneficiary',
-      skippedReason: null,
       medicalRecordFound: 'YES',
       measures: beneficiary.measures.map((measure) => {
         // Update one or more measures with submission data *** todo: add link here to narrative describing measure submission data
