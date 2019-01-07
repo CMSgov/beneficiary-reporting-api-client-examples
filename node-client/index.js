@@ -2,7 +2,7 @@ const axios = require('axios');
 const inquirer = require('inquirer');
 const exampleData = require('../data.json');
 
-const BASE_URL = 'https://qpp.cms.gov/api/preview/submissions/web-interface/';
+const BASE_URL = 'https://qpp.cms.gov/api/submissions/web-interface/';
 const LIMIT = 100; // This is the max query limit for the API
 
 
