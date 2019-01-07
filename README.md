@@ -22,7 +22,7 @@ For example, submissions for a beneficiary in PREV-5 would look like this:
 ]
 ```
 
-The measures metadata can be found [here](https://qpp.cms.gov/api/preview/submissions/web-interface/docs/#/Measures%20Metadata/get_metadata). Reviewing the metadata should provide sufficient explanation of each measure and the expected answers for the measure questions.
+The measures metadata can be found [here](https://qpp.cms.gov/api/submissions/web-interface/docs/#/Measures%20Metadata/get_metadata). Reviewing the metadata should provide sufficient explanation of each measure and the expected answers for the measure questions.
 
 # Installing and Getting Started #
 
