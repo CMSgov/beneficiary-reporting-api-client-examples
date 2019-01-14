@@ -28,11 +28,12 @@ async function start() {
   /**
    * 2. Get a list of your organizations
    */
-  const myOrganizations = (await http.get('organizations')).data;
+  const myOrganizations = (await http.get('organizations')).data.data.items;
 
   // We'll use the first org in the array on this example
-  // This should be matched with your EHR data by organization.tin
-  const organization = myOrganizations.data.items[0];
+  // This should be matched with your EHR data by organization.tin and the performanceYear you are reporting on.
+  // For the purposes of this example we are only using the performanceYear
+  const organization = myOrganizations.find(x => x.performanceYear === 2018);
 
 
   /**
