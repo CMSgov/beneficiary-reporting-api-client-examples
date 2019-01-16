@@ -4,7 +4,7 @@
 The intention of this code is to demonstrate example Web Interface API clients and how one could use the APIs to programmtically complete their reporting requirements. Each project is self contained in its own project directory (Ex. node-client), and each project has its own README.
 
 ### Example Data
-A set of example data has been provided for these examples. This data.json file represents completed submission data for each of the 14 Quality Scoring measures. Details on these measures can be found [here](https://www.cms.gov/Medicare/Quality-Payment-Program/Resource-Library/2018-Web-Interface-Measures-and-supporting-documents.zip)
+A set of example data has been provided for these examples. This data.json file represents completed submission data for each of the 14 Quality Scoring measures. Details on these measures can be found [here](https://qpp-cm-prod-content.s3.amazonaws.com/uploads/153/2018-CMS-Web-Interface-Measures-and-supporting-documents.zip)
 
 The actual submission data that you will send should be mapped from you EHR system to the expected format.
 
