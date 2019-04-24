@@ -1,22 +1,30 @@
-
 import requests
 import json
 import asyncio
 import os
-from datetime import datetime
 
-BASEURL = 'https://qpp.cms.gov/api/submissions/web-interface/'
+# BASEURL = 'https://qpp.cms.gov/api/submissions/web-interface/'
+LOCAL_BASEURL = 'http://localhost:3000/api/submissions/web-interface/'
 LIMIT = 100
 
 class CollectStats:
-    def do_main_task(self):
-        headers = {'Content-Type': 'application/json'}
+    def get_url(self, path):
+        return LOCAL_BASEURL+path
 
+    async def do_main_task(self):
         # get auth token
-        self.get_token()
+        # token = self.get_token()
+
+        headers = {'Content-Type': 'application/json'}
+        # headers['Authentication'] = token
+
 
         # Get a list of organizations
-        org_api_response = requests.get('http://localhost:3000/api/submissions/web-interface/organizations', headers=headers)
+        org_api_response = requests.get(self.get_url('organizations'), headers=headers)
+
+        #  We'll use the first org in the array on this example
+        #  This should be matched with your EHR data by organization.tin and the performanceYear you are reporting on.
+        #  For the purposes of this example we are only using the performanceYear
         if org_api_response.status_code != 200:
             print('Error code', org_api_response.status_code)
         else:
@@ -29,24 +37,29 @@ class CollectStats:
 
         #  Get the first 100 beneficiaries with measures and submissions.  The api will return a maximum of 100 beneficiaries per call
         req_org_id = self.required_org['id']
-        bene_api_response = requests.get('http://localhost:3000/api/submissions/web-interface/beneficiaries/organization/{org_id}?measures=true&submissions=true&limit={limit}'.format(org_id=req_org_id, limit=LIMIT), headers=headers)
+        bene_api_response = requests.get(self.get_url('beneficiaries/organization/{org_id}?measures=true&submissions=true&limit={limit}').format(org_id=req_org_id, limit=LIMIT), headers=headers)
         bene_data = bene_api_response.json()
         benes = bene_data['data']['items']
         total_items = bene_data['data']['totalItems']
         loaded_count = len(benes)
 
+        #  Loop through to get the remaining beneficiaries with measures and submissions
         offset = 0
         while total_items != loaded_count:
             offset = offset + bene_data['data']['startIndex'] + bene_data['data']['currentItemCount']
-            result = requests.get('http://localhost:3000/api/submissions/web-interface/beneficiaries/organization/{org_id}?measures=true&submissions=true&limit={limit}&offset={offset}'.format(org_id=req_org_id, limit=LIMIT, offset=offset), headers=headers)
+            result = requests.get(self.get_url('beneficiaries/organization/{org_id}?measures=true&submissions=true&limit={limit}&offset={offset}').format(org_id=req_org_id, limit=LIMIT, offset=offset), headers=headers)
             submission_data = result.json()
             benes = benes + submission_data['data']['items']
             loaded_count = len(benes)
         
         val = list(map(self.update_bene_info, benes))
+
+        # Loop through all beneficiaries and update with EHR data
+        # Call the beneficiaries PATCH endpoint to send the updates 100 beneficiaries at a time
         self.call_beneficiaries(val, req_org_id)
 
-        statResult = requests.get('http://localhost:3000/api/submissions/web-interface/organizations/{org_id}/stats'.format(org_id=req_org_id), headers=headers)
+        # Call the statistics endpoint to get your reporting statistics.
+        statResult = requests.get(self.get_url('organizations/{org_id}/stats').format(org_id=req_org_id), headers=headers)
         print(statResult.json())
 
 
@@ -55,7 +68,7 @@ class CollectStats:
         print(len(updates))
         index = 0
         while index < len(updates):
-            url = 'http://localhost:3000/api/submissions/web-interface/beneficiaries/organization/{org_id}'.format(org_id=req_org_id)
+            url = self.get_url('beneficiaries/organization/{org_id}').format(org_id=req_org_id)
             batch = updates[index:index+100]
             strjson = json.dumps(batch)
             index += 100
@@ -104,7 +117,9 @@ class CollectStats:
         measureObj['submissions'] = answers
 
         return measureObj
-    
+
+    #  CARE-1 is a measure with 1 or more scopes.  All submissions must include the scope for each attribute except for the 'confirmed' attribute
+    #  which is a shared attribute among all the scopes
     def update_care1_submission_info(self, answer_info, scope):
         submissionObj = dict()
         for record in answer_info:
@@ -147,9 +162,17 @@ class CollectStats:
 
         return response_data['auth']['text']
 
+async def main():
+    Web_Interface_Api = CollectStats()
+    try:
+        await Web_Interface_Api.do_main_task()
+    except Exception as e:
+        print('there is error running program', e)
 
-chetan = CollectStats()
-try:
-    chetan.do_main_task()
-except Exception as e:
-    print('there is error running program', e)
+
+if __name__ == "__main__":
+    import time
+    s = time.perf_counter()
+    asyncio.run(main())
+    elapsed = time.perf_counter() - s
+    print(f"{__file__} executed in {elapsed:0.2f} seconds.")
