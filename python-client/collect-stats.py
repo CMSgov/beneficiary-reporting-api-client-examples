@@ -2,6 +2,7 @@ import requests
 import json
 import asyncio
 import os
+import aiohttp
 
 # BASEURL = 'https://qpp.cms.gov/api/submissions/web-interface/'
 LOCAL_BASEURL = 'http://localhost:3000/api/submissions/web-interface/'
@@ -11,34 +12,41 @@ class CollectStats:
     def get_url(self, path):
         return LOCAL_BASEURL+path
 
+    async def fetch(self, url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers= { 'Content-Type': 'application/json' }) as response:
+                return await response.json()
+
+    async def patch(self, url, data):
+        async with aiohttp.ClientSession() as session:
+            async with session.patch(url, data = data, headers= { 'Content-Type': 'application/json' }) as response:
+                return await response.json()
+
+    async def post(self, url, data, headers):
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, data = data, headers = headers) as response:
+                return await response.json()
+
     async def do_main_task(self):
         # get auth token
-        # token = self.get_token()
-
-        headers = {'Content-Type': 'application/json'}
-        # headers['Authentication'] = token
-
+        token = await self.get_token()
+        print(token)
 
         # Get a list of organizations
-        org_api_response = requests.get(self.get_url('organizations'), headers=headers)
-
+        org_data = await self.fetch(self.get_url('organizations'))
+        
         #  We'll use the first org in the array on this example
         #  This should be matched with your EHR data by organization.tin and the performanceYear you are reporting on.
         #  For the purposes of this example we are only using the performanceYear
-        if org_api_response.status_code != 200:
-            print('Error code', org_api_response.status_code)
-        else:
-            org_data = org_api_response.json()
-            my_orgs = org_data['data']['items']
-            for item in my_orgs:
-                if item['performanceYear'] == 2018:
-                    self.required_org = item
-                    break
+        my_orgs = org_data['data']['items']
+        for item in my_orgs:
+            if item['performanceYear'] == 2018:
+                self.required_org = item
+                break
 
         #  Get the first 100 beneficiaries with measures and submissions.  The api will return a maximum of 100 beneficiaries per call
         req_org_id = self.required_org['id']
-        bene_api_response = requests.get(self.get_url('beneficiaries/organization/{org_id}?measures=true&submissions=true&limit={limit}').format(org_id=req_org_id, limit=LIMIT), headers=headers)
-        bene_data = bene_api_response.json()
+        bene_data = await self.fetch(self.get_url('beneficiaries/organization/{org_id}?measures=true&submissions=true&limit={limit}').format(org_id=req_org_id, limit=LIMIT))
         benes = bene_data['data']['items']
         total_items = bene_data['data']['totalItems']
         loaded_count = len(benes)
@@ -47,44 +55,29 @@ class CollectStats:
         offset = 0
         while total_items != loaded_count:
             offset = offset + bene_data['data']['startIndex'] + bene_data['data']['currentItemCount']
-            result = requests.get(self.get_url('beneficiaries/organization/{org_id}?measures=true&submissions=true&limit={limit}&offset={offset}').format(org_id=req_org_id, limit=LIMIT, offset=offset), headers=headers)
-            submission_data = result.json()
+            submission_data = await self.fetch(self.get_url('beneficiaries/organization/{org_id}?measures=true&submissions=true&limit={limit}&offset={offset}').format(org_id=req_org_id, limit=LIMIT, offset=offset))
             benes = benes + submission_data['data']['items']
             loaded_count = len(benes)
         
-        val = list(map(self.update_bene_info, benes))
+        bene_info = map(self.update_bene_info, benes)
+        val = list(bene_info)
 
         # Loop through all beneficiaries and update with EHR data
         # Call the beneficiaries PATCH endpoint to send the updates 100 beneficiaries at a time
-        self.call_beneficiaries(val, req_org_id)
+        await self.call_beneficiaries(val, req_org_id)
 
         # Call the statistics endpoint to get your reporting statistics.
-        statResult = requests.get(self.get_url('organizations/{org_id}/stats').format(org_id=req_org_id), headers=headers)
-        print(statResult.json())
+        stat_data = await self.fetch(self.get_url('organizations/{org_id}/stats').format(org_id=req_org_id))
+        print(stat_data)
 
-
-    def call_beneficiaries(self, updates, req_org_id):
-        headers = {'Content-Type': 'application/json'}
-        print(len(updates))
+    async def call_beneficiaries(self, updates, req_org_id):
         index = 0
         while index < len(updates):
             url = self.get_url('beneficiaries/organization/{org_id}').format(org_id=req_org_id)
             batch = updates[index:index+100]
             strjson = json.dumps(batch)
             index += 100
-            result = requests.patch(url, data=strjson, headers=headers)
-            
-            if result.status_code != 200:
-                print(strjson)
-                print("Error. Response code is ", result.status_code)
-                print(result.json())
-                print('Index:', index)
-                if index in [100, 1100, 1300, 1900]:
-                    continue
-                else:
-                    break
-            else:
-                print ("Successful")
+            await self.patch(url, strjson)
 
     def update_bene_info(self, bene):
         beneObj = dict()
@@ -131,34 +124,30 @@ class CollectStats:
         return submissionObj
 
 
-    def get_token(self):
-        # api_token = 'your_api_token'
+    async def get_token(self):
         headers = {'Content-Type': 'application/json',
           'Accept': 'application/vnd.qpp.cms.gov.v1+json'}
-        qpp_url = 'https://qpp.cms.gov/api/auth/'
-        user_credntials =  {}
-        user_credntials['username'] = input("Enter your username: ")
-        user_credntials['password'] = input("Enter your password: ")
+        QPPURL = 'https://qpp.cms.gov/api/auth/'
+        user_credentials =  {}
+        user_credentials['username'] = input("Enter your username: ")
+        user_credentials['password'] = input("Enter your password: ")
 
         # Verify credentials https://qpp.cms.gov/api/auth/docs/#/Authentication/post_api_auth_authn
-        print(qpp_url+'authn')
-        auth_response = requests.post(url= qpp_url+'authn', data=user_credntials, headers=headers)
-        response = auth_response.json()
-        response_data = response['data']
-        if (response is None or response_data['auth'] is None):
+        response_data = await self.post(QPPURL+'authn', user_credentials, headers)
+        if (response_data['error']):
             return { 'error': response_data['error']['message'] }
         
         headers['Authorization'] = response_data['auth']['text']
         factor_id = response_data['data']['activeFactor']['id']
         if (len(response_data['data']['factors']) > 1):
-            mfa_response = requests.post(qpp_url+'authn/request-mfa', data={ 'factorId': factor_id }, headers=headers)
-            response_data = mfa_response.json()['data']
+            mfa_response = await self.post(QPPURL+'authn/request-mfa', { 'factorId': factor_id }, headers)
+            response_data = mfa_response['data']
 
         mfa_code = input("Enter MFA Code: ")
-        auth_response = requests.post(qpp_url+'authn/verify', data={ 'factorId': factor_id, 'verificationCode': mfa_code }, headers=headers)
-        response_data = mfa_response.json()['data']
-        if (auth_response['auth'] is None):
-            return { 'error': response_data['message'] }
+        auth_response = await self.post(QPPURL+'authn/verify', { 'factorId': factor_id, 'verificationCode': mfa_code }, headers)
+        response_data = auth_response['data']
+        if (response_data['error']):
+            return { 'error': response_data['error']['message'] }
 
         return response_data['auth']['text']
 
@@ -173,6 +162,8 @@ async def main():
 if __name__ == "__main__":
     import time
     s = time.perf_counter()
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+    loop.close()
     elapsed = time.perf_counter() - s
     print(f"{__file__} executed in {elapsed:0.2f} seconds.")
