@@ -5,13 +5,17 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "author": "Branon Barrett",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.18.1",
     "commander": "^2.16.0",
-    "inquirer": "^6.2.0"
-  }
+    "inquirer": "^6.2.0",
+    "snyk": "^1.316.1"
+  },
+  "snyk": true
 }
