@@ -12,6 +12,6 @@
   "dependencies": {
     "axios": "^0.21.3",
     "commander": "^2.16.0",
-    "inquirer": "^6.5.2"
+    "inquirer": "^7.0.5"
   }
 }
