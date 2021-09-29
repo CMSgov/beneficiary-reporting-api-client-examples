@@ -10,7 +10,7 @@
   "author": "Branon Barrett",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.21.3",
+    "axios": "^0.21.4",
     "commander": "^2.16.0",
     "inquirer": "^6.5.2"
   }
